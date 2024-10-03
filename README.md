@@ -50,7 +50,7 @@ Follow these steps to get the project up and running locally.
 2. **Navigate to the project directory**:
 
    ```bash
-   cd todo-app
+   cd my-todo-app
    ```
 
 3. **Install dependencies**:
