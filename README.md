@@ -108,8 +108,8 @@ This project is licensed under the **MIT License**.
 
 ## 💬 Connect
 
-- GitHub: [@username](https://github.com/Qusai007/)
-- LinkedIn: [@yourname](https://linkedin.com/in/yourname)
+- GitHub: [@Qusai007](https://github.com/Qusai007/)
+- LinkedIn: [@qusai-johar](https://www.linkedin.com/in/qusai-johar/)
 
 Feel free to share your feedback, ideas, or report bugs!
 
