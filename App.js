@@ -1,141 +1,193 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Switch } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Animated,
+  Platform,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
-  const [taskTitle, setTaskTitle] = useState('');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const fadeAnim = new Animated.Value(1);
 
   const addTask = () => {
-    if (taskTitle.trim() !== '') {
-      setTasks([...tasks, { title: taskTitle, status: false }]);
-      setTaskTitle('');
+    if (newTaskTitle.trim() !== '') {
+      const newTask = { id: Date.now().toString(), title: newTaskTitle, status: false };
+      setTasks([...tasks, newTask]);
+      setNewTaskTitle('');
+
+      Animated.sequence([
+        Animated.timing(fadeAnim, { toValue: 0.3, duration: 150, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      ]).start();
     }
   };
 
-  const deleteTask = (index) => {
-    const newTasks = [...tasks];
-    newTasks.splice(index, 1);
-    setTasks(newTasks);
+  const toggleTaskStatus = (taskId) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === taskId ? { ...task, status: !task.status } : task
+      )
+    );
   };
 
-  const toggleTaskStatus = (index) => {
-    const newTasks = [...tasks];
-    newTasks[index].status = !newTasks[index].status;
-    setTasks(newTasks);
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter((task) => task.id !== taskId));
   };
-
-  const renderTask = ({ item, index }) => (
-    <View style={styles.taskContainer}>
-      <View style={{ flex: 1 }}>
-        <Text style={item.status ? styles.taskDone : styles.taskText}>{item.title}</Text>
-      </View>
-      <Switch value={item.status} onValueChange={() => toggleTaskStatus(index)} />
-      <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTask(index)}>
-        <Text style={styles.deleteButtonText}>Delete</Text>
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
-    <LinearGradient colors={['#FF7E5F', '#FFB88C']} style={styles.gradient}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Colorful To-Do App</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter task title"
-            placeholderTextColor="#fff"
-            value={taskTitle}
-            onChangeText={setTaskTitle}
-          />
-          <TouchableOpacity style={styles.addButton} onPress={addTask}>
-            <Text style={styles.addButtonText}>Add Task</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={tasks}
-          renderItem={renderTask}
-          keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={{ paddingBottom: 50 }}
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['#6a11cb', '#2575fc']}
+        style={styles.headerContainer}
+      >
+        <Text style={styles.header}>To-Do App</Text>
+      </LinearGradient>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter a task title"
+          placeholderTextColor="#bbb"
+          value={newTaskTitle}
+          onChangeText={setNewTaskTitle}
         />
+        <TouchableOpacity
+          style={[styles.addButton, !newTaskTitle.trim() && styles.disabledButton]}
+          onPress={addTask}
+          disabled={!newTaskTitle.trim()}
+        >
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
       </View>
-    </LinearGradient>
+
+      <FlatList
+        data={tasks}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Animated.View style={[styles.taskItem, { opacity: fadeAnim }]}>
+            <TouchableOpacity
+              style={[styles.checkbox, item.status && styles.checkboxCompleted]}
+              onPress={() => toggleTaskStatus(item.id)}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+                {item.status ? '✔' : ''}
+              </Text>
+            </TouchableOpacity>
+            <Text style={[styles.taskText, item.status && styles.taskCompleted]}>
+              {item.title}
+            </Text>
+            <TouchableOpacity onPress={() => deleteTask(item.id)}>
+              <Text style={styles.deleteButton}>✖</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'android' ? 50 : 0,
+    backgroundColor: '#f0f4f8',
   },
-  title: {
-    fontSize: 32,
+  headerContainer: {
+    paddingVertical: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  header: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#fff',
     textAlign: 'center',
-    marginBottom: 30,
+    color: '#fff',
   },
   inputContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
-    width: '100%',
-    alignItems: 'center',
+    marginVertical: 20,
+    marginHorizontal: 20,
   },
   input: {
     flex: 1,
-    height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    color: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    fontSize: 18,
-    marginRight: 10,
+    padding: 15,
+    fontSize: 16,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 20,
+    backgroundColor: '#fff',
   },
   addButton: {
-    backgroundColor: '#FF6B6B',
-    paddingHorizontal: 20,
+    marginLeft: 10,
     paddingVertical: 15,
-    borderRadius: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#ff5722',
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#ff5722',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  disabledButton: {
+    backgroundColor: '#aaa',
   },
   addButtonText: {
     color: '#fff',
+    fontSize: 24,
     fontWeight: 'bold',
-    fontSize: 16,
   },
-  taskContainer: {
+  taskItem: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 10,
-    padding: 15,
-    marginVertical: 5,
     alignItems: 'center',
-    width: '100%',
+    padding: 15,
+    marginBottom: 15,
+    marginHorizontal: 20,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ff5722',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    backgroundColor: '#f0f4f8',
+  },
+  checkboxCompleted: {
+    backgroundColor: '#4caf50',
+    borderColor: '#4caf50',
   },
   taskText: {
-    fontSize: 18,
-    color: '#fff',
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
   },
-  taskDone: {
-    fontSize: 18,
-    color: '#fff',
+  taskCompleted: {
     textDecorationLine: 'line-through',
+    color: 'gray',
   },
   deleteButton: {
-    backgroundColor: '#FF5252',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    marginLeft: 10,
-  },
-  deleteButtonText: {
-    color: '#fff',
+    color: '#e91e63',
     fontWeight: 'bold',
+    fontSize: 18,
   },
 });
